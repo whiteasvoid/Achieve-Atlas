@@ -19,7 +19,8 @@
     "paths": {
       "@/*": [
         "src/*"
-      ]
+      ],
+      "interfaces/": [".src/data/interfaces/", ".src/data/interfaces/*"]
     },
   },
   "include": ["src", "electron"],

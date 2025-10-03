@@ -1,3 +1,6 @@
+# API keys and evironment variables
+.env
+
 # Logs
 logs
 *.log
