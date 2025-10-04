@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "electron-updater": "^6.3.9",
-    "steam-webapi": "^0.6.5"
+    "react-router-dom": "^7.9.3"
   },
   "devDependencies": {
     "@playwright/test": "^1.48.2",
