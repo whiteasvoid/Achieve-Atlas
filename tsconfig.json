@@ -25,6 +25,9 @@
       ],
       "pages/*": [
         "src/renderer/pages/*"
+      ],
+      "components/*": [
+        "src/renderer/components/*"
       ]
     },
   },

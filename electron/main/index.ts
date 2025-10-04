@@ -46,6 +46,8 @@ const indexHtml = path.join(RENDERER_DIST, 'index.html')
 async function createWindow() {
   win = new BrowserWindow({
     title: 'My App',
+    width: 1200,   // Custom initial width
+    height: 800,   // Custom initial height
     icon: path.join(process.env.VITE_PUBLIC, 'favicon.ico'),
     webPreferences: {
       preload,
@@ -108,6 +110,8 @@ app.on('activate', () => {
 // New window example arg: new windows url
 ipcMain.handle('open-win', (_, arg) => {
   const childWindow = new BrowserWindow({
+    width: 1600,   // Custom initial width (matching main window)
+    height: 800,   // Custom initial height (matching main window)
     webPreferences: {
       preload,
       nodeIntegration: true,
