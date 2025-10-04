@@ -16,7 +16,9 @@ export default defineConfig(({ command }) => {
   return {
     resolve: {
       alias: {
-        '@': path.join(__dirname, 'src')
+        '@': path.join(__dirname, 'src'), // Base for source
+        'interfaces': path.resolve(__dirname, './src/data/interfaces'), // Base for interfaces/*
+        'pages': path.resolve(__dirname, './src/renderer/pages'), // Base for pages/*
       },
     },
     plugins: [

@@ -20,7 +20,12 @@
       "@/*": [
         "src/*"
       ],
-      "interfaces/": [".src/data/interfaces/", ".src/data/interfaces/*"]
+      "interfaces/*": [
+        "src/data/interfaces/*"
+      ],
+      "pages/*": [
+        "src/renderer/pages/*"
+      ]
     },
   },
   "include": ["src", "electron"],
