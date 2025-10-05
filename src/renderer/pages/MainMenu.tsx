@@ -10,6 +10,9 @@ function MainMenu() {
       <Link to="/dashboard" className="start-tracking-button">
         Start Tracking
       </Link>
+      <Link to="/debug" className="debug-link">
+        Debug
+      </Link>
     </div>
   );
 }

@@ -1,0 +1,6 @@
+.debug-container {
+  padding: 1rem;
+  background-color: #1a202c;
+  color: white;
+  min-height: 100vh;
+}

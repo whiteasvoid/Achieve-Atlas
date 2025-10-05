@@ -1,6 +1,13 @@
 /// <reference types="vite/client" />
 
-interface Window {
-  // expose in the `electron/preload/index.ts`
-  ipcRenderer: import('electron').IpcRenderer
+// Define the shape of the API that will be exposed from the main process
+export interface IElectronAPI {
+  getOwnedGames: () => Promise<any[]>;
+}
+
+// Extend the global Window object with our new API
+declare global {
+  interface Window {
+    electronAPI: IElectronAPI;
+  }
 }

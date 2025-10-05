@@ -3,7 +3,9 @@ import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import os from 'node:os'
+import dotenv from 'dotenv'
 import { update } from './update'
+import { getOwnedGames } from './api/steam'
 
 const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -19,6 +21,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 // │ └── index.html    > Electron-Renderer
 //
 process.env.APP_ROOT = path.join(__dirname, '../..')
+
+// Load environment variables from .env file in the project root
+dotenv.config();
 
 export const MAIN_DIST = path.join(process.env.APP_ROOT, 'dist-electron')
 export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
@@ -46,17 +51,14 @@ const indexHtml = path.join(RENDERER_DIST, 'index.html')
 async function createWindow() {
   win = new BrowserWindow({
     title: 'My App',
-    width: 1200,   // Custom initial width
-    height: 800,   // Custom initial height
     icon: path.join(process.env.VITE_PUBLIC, 'favicon.ico'),
     webPreferences: {
       preload,
-      // Warning: Enable nodeIntegration and disable contextIsolation is not secure in production
-      // nodeIntegration: true,
-
-      // Consider using contextBridge.exposeInMainWorld
-      // Read more on https://www.electronjs.org/docs/latest/tutorial/context-isolation
-      // contextIsolation: false,
+      // The contextBridge mechanism requires contextIsolation to be enabled.
+      contextIsolation: true,
+      // It's a security best practice to disable nodeIntegration and use the preload script
+      // to expose specific Node.js APIs to the renderer process.
+      nodeIntegration: false,
     },
   })
 
@@ -108,10 +110,10 @@ app.on('activate', () => {
 })
 
 // New window example arg: new windows url
+ipcMain.handle('get-owned-games', getOwnedGames);
+
 ipcMain.handle('open-win', (_, arg) => {
   const childWindow = new BrowserWindow({
-    width: 1600,   // Custom initial width (matching main window)
-    height: 800,   // Custom initial height (matching main window)
     webPreferences: {
       preload,
       nodeIntegration: true,

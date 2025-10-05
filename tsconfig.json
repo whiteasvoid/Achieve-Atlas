@@ -20,9 +20,6 @@
       "@/*": [
         "src/*"
       ],
-      "interfaces/*": [
-        "src/data/interfaces/*"
-      ],
       "pages/*": [
         "src/renderer/pages/*"
       ],
