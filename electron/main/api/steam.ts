@@ -25,7 +25,6 @@ export async function getOwnedGames() {
     throw new Error('Missing Steam API key or Steam ID in environment variables.');
   }
 
-  // Construct endpoint with query params for owned games retrieval
   const endpoint = '/IPlayerService/GetOwnedGames/v1/';
   const params = new URLSearchParams({
     key: apiKey,
@@ -40,19 +39,22 @@ export async function getOwnedGames() {
     const response = await axios.get(requestUrl);
 
     if (response.data && response.data.response && response.data.response.games) {
-      return response.data.response.games;
+      // Reverted to the original, faster implementation.
+      // We no longer fetch achievement details for every game here.
+      // We also need to add the header_image property here.
+      return response.data.response.games.map((game: any) => ({
+        ...game,
+        header_image: `https://steamcdn-a.akamaihd.net/steam/apps/${game.appid}/header.jpg`
+      }));
     }
 
-    // Handle cases where the API returns a successful status code but an empty or unexpected response
     console.error('Unexpected API response structure:', response.data);
     throw new Error('Unexpected API response structure.');
   } catch (error: unknown) {
     let errorMessage = 'An unknown error occurred';
     if (axios.isAxiosError(error)) {
-      // The error is an Axios error, so we can safely access its response property
       errorMessage = error.response ? JSON.stringify(error.response.data) : error.message;
     } else if (error instanceof Error) {
-      // The error is a standard Error object
       errorMessage = error.message;
     }
     console.error('Failed to fetch owned games in main process:', errorMessage);
@@ -120,6 +122,52 @@ export async function getPlayerAchievements(appid: number) {
     console.error(`Failed to fetch player achievements for appid ${appid}:`, errorMessage);
     // Instead of throwing, return an empty array to not break the entire game list
     return [];
+  }
+}
+
+/**
+ * Fetches and merges both the full achievement schema and the player's unlocked achievements for a specific game.
+ *
+ * This function provides a comprehensive list of all achievements for a game, each marked with the player's completion status.
+ * It makes two parallel calls to the Steam API:
+ * 1. `getSchemaForGame(appid)`: Retrieves all possible achievements (name, description, icon).
+ * 2. `getPlayerAchievements(appid)`: Retrieves the achievements the player has unlocked.
+ *
+ * It then merges these two lists, creating a unified list where each achievement from the schema
+ * is supplemented with an `achieved` status and `unlocktime`.
+ *
+ * @param appid - The Steam App ID of the game.
+ * @returns Promise<DetailedAchievement[]> - A promise that resolves to an array of detailed achievement objects,
+ *   each containing schema information and player completion status. Returns an empty array on failure.
+ */
+export async function getGameDetails(appid: number) {
+  try {
+    // Fetch schema and player achievements concurrently
+    const [schema, playerAchievements] = await Promise.all([
+      getSchemaForGame(appid),
+      getPlayerAchievements(appid),
+    ]);
+
+    if (!schema || schema.length === 0) {
+      return []; // No achievements available for this game
+    }
+
+    // Create a lookup map for unlocked achievements for efficient merging
+    const unlockedAchievements = new Map(
+      playerAchievements.map((ach: any) => [ach.apiname, ach.unlocktime])
+    );
+
+    // Merge schema with player's achievement status
+    const detailedAchievements = schema.map((ach: any) => ({
+      ...ach,
+      achieved: unlockedAchievements.has(ach.name),
+      unlocktime: unlockedAchievements.get(ach.name) || 0,
+    }));
+
+    return detailedAchievements;
+  } catch (error) {
+    console.error(`Failed to get game details for appid ${appid}:`, error);
+    return []; // Return empty array on error to prevent frontend crashes
   }
 }
 

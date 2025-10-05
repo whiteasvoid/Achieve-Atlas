@@ -1,0 +1,8 @@
+.achievement-card.locked {
+  opacity: 0.5;
+  filter: grayscale(80%);
+}
+
+.achievement-card.unlocked {
+  border-left: 4px solid #48bb78; /* green-500 */
+}

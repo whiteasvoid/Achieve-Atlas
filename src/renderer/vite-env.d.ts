@@ -5,9 +5,13 @@ export interface IElectronAPI {
   getOwnedGames: () => Promise<any[]>;
   getPlayerAchievements: (appid: number) => Promise<any>;
   getSchemaForGame: (appid: number) => Promise<any>;
+  getGameDetails: (appid: number) => Promise<any>;
   user: {
     getSteamId: () => Promise<string | null>;
     setSteamId: (steamId: string) => Promise<void>;
+    getPinnedAchievements: () => Promise<any[]>;
+    pinAchievement: (achievement: any) => Promise<void>;
+    unpinAchievement: (achievementName: string, appid: number) => Promise<void>;
   };
 }
 

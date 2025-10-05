@@ -4,6 +4,7 @@ export interface Game {
   playtime_forever: number;
   img_icon_url: string;
   img_logo_url: string;
+  header_image: string;
   completedAchievements?: number;
   totalAchievements?: number;
 }
@@ -25,6 +26,38 @@ export const getOwnedGames = async (): Promise<Game[]> => {
     return games;
   } catch (error) {
     console.error('Failed to fetch owned games via IPC:', error);
+    throw error;
+  }
+};
+
+export interface DetailedAchievement {
+  name: string;
+  displayName: string;
+  description: string;
+  icon: string;
+  icongray: string;
+  achieved: boolean;
+  unlocktime: number;
+  gameName?: string; // Optional: Used for pinned achievements on the dashboard
+}
+
+/**
+ * Fetches the detailed achievement data for a specific game, including player progress.
+ *
+ * This function calls the backend's `getGameDetails` function, which merges the game's
+ * achievement schema with the player's unlocked achievements.
+ *
+ * @param appid - The Steam App ID of the game.
+ * @returns Promise<DetailedAchievement[]> - An array of all achievements for the game,
+ *   each with an `achieved` status.
+ * @throws Error - If the IPC call fails.
+ */
+export const getGameDetails = async (appid: number): Promise<DetailedAchievement[]> => {
+  try {
+    const achievements = await window.electronAPI.getGameDetails(appid);
+    return achievements;
+  } catch (error) {
+    console.error(`Failed to fetch game details for appid ${appid} via IPC:`, error);
     throw error;
   }
 };
