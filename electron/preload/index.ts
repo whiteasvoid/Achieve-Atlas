@@ -3,6 +3,8 @@ import { ipcRenderer, contextBridge } from 'electron'
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld('electronAPI', {
   getOwnedGames: () => ipcRenderer.invoke('get-owned-games'),
+  getPlayerAchievements: (appid: number) => ipcRenderer.invoke('get-player-achievements', appid),
+  getSchemaForGame: (appid: number) => ipcRenderer.invoke('get-schema-for-game', appid),
 });
 
 // --------- Preload scripts loading ---------

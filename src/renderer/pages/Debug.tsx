@@ -1,5 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { getOwnedGames, Game } from '../api/steam';
+import {
+  getOwnedGames,
+  getPlayerAchievements,
+  getSchemaForGame,
+  Game
+} from '../api/steam';
 import './Debug.css';
 
 const Debug: React.FC = () => {
@@ -8,11 +13,36 @@ const Debug: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchGames = async () => {
+    const fetchGamesAndAchievements = async () => {
       try {
         setLoading(true);
         const ownedGames = await getOwnedGames();
-        setGames(ownedGames);
+
+        const gamesWithAchievements = await Promise.all(
+          ownedGames.map(async (game) => {
+            if (game.playtime_forever > 0) {
+              try {
+                const [playerAchievements, schema] = await Promise.all([
+                  getPlayerAchievements(game.appid),
+                  getSchemaForGame(game.appid),
+                ]);
+
+                return {
+                  ...game,
+                  completedAchievements: playerAchievements.length,
+                  totalAchievements: schema.length,
+                };
+              } catch (e) {
+                console.error(`Failed to fetch achievement data for ${game.name}`, e);
+                // Return game without achievement data if fetching fails
+                return game;
+              }
+            }
+            return game;
+          })
+        );
+        
+        setGames(gamesWithAchievements);
         setError(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An unknown error occurred.');
@@ -21,7 +51,7 @@ const Debug: React.FC = () => {
       }
     };
 
-    fetchGames();
+    fetchGamesAndAchievements();
   }, []);
 
   return (
@@ -30,12 +60,20 @@ const Debug: React.FC = () => {
       <p>This page is used for testing Steam API calls.</p>
       <div className="mt-4 p-4 bg-gray-800 rounded">
         <h2 className="text-xl font-bold">Owned Games</h2>
-        {loading && <p>Loading...</p>}
+        {loading && <p>Loading games and achievements...</p>}
         {error && <p className="text-red-500">Error: {error}</p>}
         {!loading && !error && (
           <ul className="list-disc list-inside mt-2">
             {games.map((game) => (
-              <li key={game.appid}>{game.name}</li>
+              <li key={game.appid}>
+                {game.name}
+                {game.playtime_forever > 0 &&
+                  (typeof game.completedAchievements !== 'undefined' && typeof game.totalAchievements !== 'undefined') && (
+                    <span className="ml-2 text-gray-400">
+                      ({game.completedAchievements} / {game.totalAchievements} achievements)
+                    </span>
+                  )}
+              </li>
             ))}
           </ul>
         )}

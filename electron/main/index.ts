@@ -5,7 +5,7 @@ import path from 'node:path'
 import os from 'node:os'
 import dotenv from 'dotenv'
 import { update } from './update'
-import { getOwnedGames } from './api/steam'
+import { getOwnedGames, getPlayerAchievements, getSchemaForGame } from './api/steam'
 
 const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -111,6 +111,8 @@ app.on('activate', () => {
 
 // New window example arg: new windows url
 ipcMain.handle('get-owned-games', getOwnedGames);
+ipcMain.handle('get-player-achievements', (event, appid) => getPlayerAchievements(appid));
+ipcMain.handle('get-schema-for-game', (event, appid) => getSchemaForGame(appid));
 
 ipcMain.handle('open-win', (_, arg) => {
   const childWindow = new BrowserWindow({
