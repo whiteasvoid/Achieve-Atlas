@@ -5,8 +5,8 @@ export interface Game {
   img_icon_url: string;
   img_logo_url: string;
   header_image: string;
-  completedAchievements?: number;
-  totalAchievements?: number;
+  unlockedAchievements: number;
+  totalAchievements: number;
 }
 
 /**
@@ -39,6 +39,7 @@ export interface DetailedAchievement {
   achieved: boolean;
   unlocktime: number;
   gameName?: string; // Optional: Used for pinned achievements on the dashboard
+  appid?: number;
 }
 
 /**

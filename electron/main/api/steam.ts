@@ -1,6 +1,42 @@
 import axios from 'axios';
+import { app } from 'electron';
+import fs from 'fs';
+import path from 'path';
 
 const STEAM_API_BASE_URL = 'https://api.steampowered.com';
+const userDataPath = app.getPath('userData');
+const ownedGamesCachePath = path.join(userDataPath, 'owned_games_cache.json');
+
+interface GameCache {
+  timestamp: number;
+  games: any[];
+}
+
+// Helper to read owned games from cache
+function readOwnedGamesCache(): GameCache | null {
+  try {
+    if (fs.existsSync(ownedGamesCachePath)) {
+      const dataBuffer = fs.readFileSync(ownedGamesCachePath);
+      return JSON.parse(dataBuffer.toString());
+    }
+  } catch (error) {
+    console.error('Failed to read owned games cache:', error);
+  }
+  return null;
+}
+
+// Helper to write owned games to cache
+function writeOwnedGamesCache(games: any[]): void {
+  try {
+    const cache: GameCache = {
+      timestamp: Date.now(),
+      games,
+    };
+    fs.writeFileSync(ownedGamesCachePath, JSON.stringify(cache, null, 2));
+  } catch (error) {
+    console.error('Failed to write owned games cache:', error);
+  }
+}
 
 /**
  * Fetches the list of games owned by the authenticated Steam user.
@@ -25,40 +61,68 @@ export async function getOwnedGames() {
     throw new Error('Missing Steam API key or Steam ID in environment variables.');
   }
 
-  const endpoint = '/IPlayerService/GetOwnedGames/v1/';
-  const params = new URLSearchParams({
-    key: apiKey,
-    steamid: steamId,
-    format: 'json',
-    include_appinfo: 'true',
-  });
+  let games = [];
+  const cache = readOwnedGamesCache();
+  const now = Date.now();
+  const oneDay = 24 * 60 * 60 * 1000;
 
-  const requestUrl = `${STEAM_API_BASE_URL}${endpoint}?${params}`;
+  // Check if cache is valid and less than 24 hours old
+  if (cache && now - cache.timestamp < oneDay) {
+    console.log('Loading owned games from cache.');
+    games = cache.games;
+  } else {
+    console.log('Fetching owned games from Steam API.');
+    const endpoint = '/IPlayerService/GetOwnedGames/v1/';
+    const params = new URLSearchParams({
+      key: apiKey,
+      steamid: steamId,
+      format: 'json',
+      include_appinfo: 'true',
+    });
+    const requestUrl = `${STEAM_API_BASE_URL}${endpoint}?${params}`;
 
+    try {
+      const response = await axios.get(requestUrl);
+      if (response.data && response.data.response && response.data.response.games) {
+        games = response.data.response.games;
+        writeOwnedGamesCache(games); // Update the cache
+      } else {
+        console.error('Unexpected API response structure:', response.data);
+        throw new Error('Unexpected API response structure.');
+      }
+    } catch (error: unknown) {
+      let errorMessage = 'An unknown error occurred';
+      if (axios.isAxiosError(error)) {
+        errorMessage = error.response ? JSON.stringify(error.response.data) : error.message;
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      console.error('Failed to fetch owned games from API:', errorMessage);
+      throw new Error(`Failed to fetch owned games: ${errorMessage}`);
+    }
+  }
+
+  // Always fetch fresh achievement data, regardless of cache status
   try {
-    const response = await axios.get(requestUrl);
+    const gamesWithDetails = await Promise.all(
+      games.map(async (game: any) => {
+        const [playerAchievements, schema] = await Promise.all([
+          getPlayerAchievements(game.appid),
+          getSchemaForGame(game.appid),
+        ]);
 
-    if (response.data && response.data.response && response.data.response.games) {
-      // Reverted to the original, faster implementation.
-      // We no longer fetch achievement details for every game here.
-      // We also need to add the header_image property here.
-      return response.data.response.games.map((game: any) => ({
-        ...game,
-        header_image: `https://steamcdn-a.akamaihd.net/steam/apps/${game.appid}/header.jpg`
-      }));
-    }
-
-    console.error('Unexpected API response structure:', response.data);
-    throw new Error('Unexpected API response structure.');
-  } catch (error: unknown) {
-    let errorMessage = 'An unknown error occurred';
-    if (axios.isAxiosError(error)) {
-      errorMessage = error.response ? JSON.stringify(error.response.data) : error.message;
-    } else if (error instanceof Error) {
-      errorMessage = error.message;
-    }
-    console.error('Failed to fetch owned games in main process:', errorMessage);
-    throw new Error(`Failed to fetch owned games: ${errorMessage}`);
+        return {
+          ...game,
+          header_image: `https://steamcdn-a.akamaihd.net/steam/apps/${game.appid}/header.jpg`,
+          unlockedAchievements: playerAchievements.length,
+          totalAchievements: schema.length,
+        };
+      })
+    );
+    return gamesWithDetails;
+  } catch (error) {
+    console.error('Failed to fetch achievement details for games:', error);
+    throw new Error('Failed to fetch achievement details for games.');
   }
 }
 

@@ -20,7 +20,10 @@ const Dashboard: React.FC = () => {
           getOwnedGames(),
           window.electronAPI.user.getPinnedAchievements(),
         ]);
-        setGames(ownedGames);
+        const filteredGames = ownedGames.filter(
+          (game) => game.playtime_forever > 0 && game.totalAchievements > 0
+        );
+        setGames(filteredGames);
         setPinnedAchievements(pinned);
         setError(null);
       } catch (err) {
@@ -34,18 +37,40 @@ const Dashboard: React.FC = () => {
   }, []);
 
 
+  const totalAchievements = games.reduce((acc, game) => acc + game.totalAchievements, 0);
+  const completedAchievements = games.reduce((acc, game) => acc + game.unlockedAchievements, 0);
+
+
+  const handleUnpin = async (achievement: DetailedAchievement) => {
+    if (!achievement.appid) {
+      console.error('Cannot unpin achievement without an appid.');
+      return;
+    }
+    try {
+      await window.electronAPI.user.unpinAchievement(achievement.name, achievement.appid);
+      setPinnedAchievements((prev) =>
+        prev.filter((a) => !(a.name === achievement.name && a.appid === achievement.appid))
+      );
+    } catch (err) {
+      console.error('Failed to unpin achievement:', err);
+    }
+  };
+
   return (
     <div className="dashboard p-4 bg-gray-900 text-white">
       <Header />
-      {/* TODO: Replace with actual data from the application's state */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 my-4">
-        <StatsCard title="Total Achievements" value="325" icon={<span>🏆</span>} />
-        <StatsCard title="Completed" value="258" icon={<span>✅</span>} />
+        <StatsCard title="Total Achievements" value={loading ? '...' : totalAchievements.toLocaleString()} icon={<span>🏆</span>} />
+        <StatsCard title="Completed" value={loading ? '...' : completedAchievements.toLocaleString()} icon={<span>✅</span>} />
         <StatsCard title="Games Tracked" value={loading ? '...' : games.length} icon={<span>🎮</span>} />
         <StatsCard title="Pinned" value={pinnedAchievements.length} icon={<span>📌</span>} />
       </div>
       <div className="mt-4">
-        <AchievementList title="Pinned Achievements" achievements={pinnedAchievements} />
+        <AchievementList
+          title="Pinned Achievements"
+          achievements={pinnedAchievements}
+          onUnpin={handleUnpin}
+        />
       </div>
       <GameOverview games={games} loading={loading} error={error} />
     </div>

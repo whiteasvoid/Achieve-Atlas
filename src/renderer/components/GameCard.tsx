@@ -15,6 +15,9 @@ const GameCard: React.FC<GameCardProps> = ({ game }) => {
       <div className="p-4">
         <p className="font-bold truncate">{game.name}</p>
         <p className="text-sm text-gray-400">{playtimeHours} hours played</p>
+        <p className="text-sm text-gray-400">
+          {game.unlockedAchievements} / {game.totalAchievements} achievements
+        </p>
       </div>
     </Link>
   );

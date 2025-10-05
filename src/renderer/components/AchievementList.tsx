@@ -5,9 +5,10 @@ import { DetailedAchievement } from '../api/steam';
 interface AchievementListProps {
   title: string;
   achievements: DetailedAchievement[];
+  onUnpin?: (achievement: DetailedAchievement) => void;
 }
 
-const AchievementList: React.FC<AchievementListProps> = ({ title, achievements }) => {
+const AchievementList: React.FC<AchievementListProps> = ({ title, achievements, onUnpin }) => {
   if (!achievements || achievements.length === 0) {
     return (
       <div className="bg-gray-900 p-4 rounded-lg">
@@ -22,9 +23,12 @@ const AchievementList: React.FC<AchievementListProps> = ({ title, achievements }
       <h3 className="text-xl font-bold mb-4">{title}</h3>
       <div className="grid grid-cols-1 gap-4">
         {achievements.map((ach, index) => (
-          // The AchievementCard is now flexible enough to be used directly.
-          // The pin button will not be displayed as onPinToggle is not provided.
-          <AchievementCard key={ach.name || index} achievement={ach} />
+          <AchievementCard
+            key={ach.name || index}
+            achievement={ach}
+            isPinned={true}
+            onPinToggle={onUnpin}
+          />
         ))}
       </div>
     </div>
