@@ -5,6 +5,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getOwnedGames: () => ipcRenderer.invoke('get-owned-games'),
   getPlayerAchievements: (appid: number) => ipcRenderer.invoke('get-player-achievements', appid),
   getSchemaForGame: (appid: number) => ipcRenderer.invoke('get-schema-for-game', appid),
+  user: {
+    getSteamId: (): Promise<string | null> => ipcRenderer.invoke('get-steam-id'),
+    setSteamId: (steamId: string): Promise<void> => ipcRenderer.invoke('set-steam-id', steamId),
+  },
 });
 
 // --------- Preload scripts loading ---------
