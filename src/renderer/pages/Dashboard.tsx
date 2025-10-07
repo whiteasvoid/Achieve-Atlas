@@ -3,6 +3,7 @@ import Header from 'components/ui/Header';
 import StatsCard from 'components/StatsCard';
 import AchievementList from 'components/AchievementList';
 import GameOverview from 'components/GameOverview';
+import SteamIDModal from 'components/SteamIDModal';
 import { getOwnedGames, Game, DetailedAchievement } from '../api/steam';
 import './Dashboard.css';
 
@@ -12,30 +13,41 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCompletedGames, setShowCompletedGames] = useState(true);
+  const [showSteamIDModal, setShowSteamIDModal] = useState(false);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [ownedGames, pinned] = await Promise.all([
+        getOwnedGames(),
+        window.electronAPI.user.getPinnedAchievements(),
+      ]);
+      const filteredGames = ownedGames.filter(
+        (game) => game.playtime_forever > 0 && game.totalAchievements > 0
+      );
+      setGames(filteredGames);
+      setPinnedAchievements(pinned);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unknown error occurred.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const [ownedGames, pinned] = await Promise.all([
-          getOwnedGames(),
-          window.electronAPI.user.getPinnedAchievements(),
-        ]);
-        const filteredGames = ownedGames.filter(
-          (game) => game.playtime_forever > 0 && game.totalAchievements > 0
-        );
-        setGames(filteredGames);
-        setPinnedAchievements(pinned);
-        setError(null);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An unknown error occurred.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchData();
   }, []);
+
+  const handleSaveSteamID = async (steamId: string) => {
+    try {
+      await window.electronAPI.user.setSteamId(steamId);
+      setShowSteamIDModal(false);
+      fetchData(); // Refresh data after changing SteamID
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to set SteamID.');
+    }
+  };
 
 
   const totalAchievements = games.reduce((acc, game) => acc + game.totalAchievements, 0);
@@ -60,6 +72,14 @@ const Dashboard: React.FC = () => {
   return (
     <div className="dashboard p-4 bg-gray-900 text-white">
       <Header />
+      <div className="flex justify-end">
+        <button
+          onClick={() => setShowSteamIDModal(true)}
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+        >
+          Change SteamID
+        </button>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 my-4">
         <StatsCard title="Total Achievements" value={loading ? '...' : totalAchievements.toLocaleString()} icon={<span>🏆</span>} />
         <StatsCard title="Completed" value={loading ? '...' : completedAchievements.toLocaleString()} icon={<span>✅</span>} />
@@ -92,6 +112,11 @@ const Dashboard: React.FC = () => {
         )}
         loading={loading}
         error={error}
+      />
+      <SteamIDModal
+        show={showSteamIDModal}
+        onClose={() => setShowSteamIDModal(false)}
+        onSave={handleSaveSteamID}
       />
     </div>
   );

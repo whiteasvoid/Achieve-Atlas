@@ -53,6 +53,7 @@ async function createWindow() {
   win = new BrowserWindow({
     title: 'My App',
     icon: path.join(process.env.VITE_PUBLIC, 'favicon.ico'),
+    autoHideMenuBar: true,
     webPreferences: {
       preload,
       // The contextBridge mechanism requires contextIsolation to be enabled.
