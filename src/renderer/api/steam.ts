@@ -30,6 +30,16 @@ export const getOwnedGames = async (): Promise<Game[]> => {
   }
 };
 
+export const getGlobalAchievementPercentages = async (appid: number): Promise<any[]> => {
+  try {
+    const percentages = await window.electronAPI.getGlobalAchievementPercentages(appid);
+    return percentages;
+  } catch (error) {
+    console.error(`Failed to fetch global achievement percentages for appid ${appid} via IPC:`, error);
+    throw error;
+  }
+};
+
 export interface DetailedAchievement {
   name: string;
   displayName: string;
@@ -40,6 +50,7 @@ export interface DetailedAchievement {
   unlocktime: number;
   gameName?: string; // Optional: Used for pinned achievements on the dashboard
   appid?: number;
+  percent?: number;
 }
 
 /**

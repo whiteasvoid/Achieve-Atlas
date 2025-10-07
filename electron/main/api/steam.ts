@@ -190,6 +190,49 @@ export async function getPlayerAchievements(appid: number) {
 }
 
 /**
+ * Fetches the global achievement completion percentages for a specific game.
+ *
+ * Endpoint: `/ISteamUserStats/GetGlobalAchievementPercentagesForApp/v2/`
+ * - Official Steam API method: ISteamUserStats::GetGlobalAchievementPercentagesForApp
+ * - Description: Retrieves the percentage of players who have unlocked each achievement for a given game.
+ * - Required params:
+ *   - `gameid`: The App ID of the game to retrieve achievement percentages for.
+ * - Expected response: `{ achievementpercentages: { achievements: [...] } }` where `achievements` is an array of objects, each containing `name` and `percent`.
+ * - Notes: This is a public endpoint and does not require an API key.
+ * @param appid - The Steam App ID of the game.
+ * @returns Promise<any[]> - Array of achievements with their global completion percentage.
+ */
+export async function getGlobalAchievementPercentages(appid: number) {
+  const endpoint = '/ISteamUserStats/GetGlobalAchievementPercentagesForApp/v2/';
+  const params = new URLSearchParams({
+    gameid: appid.toString(),
+    format: 'json'
+  });
+
+  const requestUrl = `${STEAM_API_BASE_URL}${endpoint}?${params}`;
+
+  try {
+    const response = await axios.get(requestUrl);
+
+    if (response.data && response.data.achievementpercentages && response.data.achievementpercentages.achievements) {
+      return response.data.achievementpercentages.achievements;
+    }
+
+    console.error('Unexpected API response structure for getGlobalAchievementPercentages:', response.data);
+    throw new Error('Unexpected API response structure for getGlobalAchievementPercentages.');
+  } catch (error: unknown) {
+    let errorMessage = 'An unknown error occurred';
+    if (axios.isAxiosError(error)) {
+      errorMessage = error.response ? JSON.stringify(error.response.data) : error.message;
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    console.error(`Failed to fetch global achievement percentages for appid ${appid}:`, errorMessage);
+    return [];
+  }
+}
+
+/**
  * Fetches and merges both the full achievement schema and the player's unlocked achievements for a specific game.
  *
  * This function provides a comprehensive list of all achievements for a game, each marked with the player's completion status.

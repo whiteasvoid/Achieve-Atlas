@@ -11,6 +11,7 @@ const Dashboard: React.FC = () => {
   const [pinnedAchievements, setPinnedAchievements] = useState<DetailedAchievement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showCompletedGames, setShowCompletedGames] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -72,7 +73,26 @@ const Dashboard: React.FC = () => {
           onUnpin={handleUnpin}
         />
       </div>
-      <GameOverview games={games} loading={loading} error={error} />
+      <div className="flex justify-between items-center mt-4">
+        <h2 className="text-xl font-bold">Games</h2>
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            id="showCompletedGames"
+            checked={showCompletedGames}
+            onChange={(e) => setShowCompletedGames(e.target.checked)}
+            className="mr-2"
+          />
+          <label htmlFor="showCompletedGames">Show Completed Games</label>
+        </div>
+      </div>
+      <GameOverview
+        games={games.filter(
+          (game) => showCompletedGames || game.unlockedAchievements !== game.totalAchievements
+        )}
+        loading={loading}
+        error={error}
+      />
     </div>
   );
 }

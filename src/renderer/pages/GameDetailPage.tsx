@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
-import { getGameDetails, DetailedAchievement, Game } from '../api/steam';
+import { getGameDetails, DetailedAchievement, Game, getGlobalAchievementPercentages } from '../api/steam';
 import AchievementCard from 'components/AchievementCard';
+import AchievementModal from 'components/AchievementModal';
 import './GameDetailPage.css';
 
 // Add isPinned to the DetailedAchievement interface for local state management
@@ -16,6 +17,10 @@ const GameDetailPage: React.FC = () => {
   const [achievements, setAchievements] = useState<AchievementWithPinStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showCompleted, setShowCompleted] = useState(true);
+  const [selectedAchievement, setSelectedAchievement] = useState<DetailedAchievement | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [globalPercentages, setGlobalPercentages] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchGameData = async () => {
@@ -29,9 +34,10 @@ const GameDetailPage: React.FC = () => {
         setLoading(true);
         const numericAppId = parseInt(appid, 10);
 
-        const [gameAchievements, pinned] = await Promise.all([
+        const [gameAchievements, pinned, percentages] = await Promise.all([
           getGameDetails(numericAppId),
           window.electronAPI.user.getPinnedAchievements(),
+          getGlobalAchievementPercentages(numericAppId),
         ]);
 
         const pinnedSet = new Set(pinned.map(p => `${p.appid}-${p.name}`));
@@ -42,6 +48,7 @@ const GameDetailPage: React.FC = () => {
         }));
 
         setAchievements(achievementsWithStatus);
+        setGlobalPercentages(percentages);
 
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An unknown error occurred.');
@@ -53,27 +60,41 @@ const GameDetailPage: React.FC = () => {
     fetchGameData();
   }, [appid]);
 
-  const handlePinToggle = async (achievement: AchievementWithPinStatus) => {
-    const isCurrentlyPinned = achievement.isPinned;
-    
+  const handlePinToggle = async (achievement: DetailedAchievement) => {
+    const achievementInState = achievements.find(a => a.name === achievement.name);
+    if (!achievementInState) return;
+
+    const isCurrentlyPinned = achievementInState.isPinned;
+
     const fullAchievementDetails = {
       ...achievement,
       appid: game?.appid,
       gameName: game?.name,
     };
-    
+
     if (isCurrentlyPinned) {
       await window.electronAPI.user.unpinAchievement(achievement.name, parseInt(appid!, 10));
     } else {
       await window.electronAPI.user.pinAchievement(fullAchievementDetails);
     }
-    
+
     // Update the local state to reflect the change immediately
     setAchievements(prev =>
       prev.map(ach =>
         ach.name === achievement.name ? { ...ach, isPinned: !isCurrentlyPinned } : ach
       )
     );
+  };
+
+  const handleAchievementClick = (achievement: DetailedAchievement) => {
+    const percentage = globalPercentages.find(p => p.name === achievement.name);
+    setSelectedAchievement({ ...achievement, percent: percentage?.percent });
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedAchievement(null);
   };
 
   if (loading) {
@@ -104,22 +125,43 @@ const GameDetailPage: React.FC = () => {
         </Link>
       </header>
       <main className="p-4">
-        <h2 className="text-2xl font-bold mb-4">Achievements</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold">Achievements</h2>
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="showCompleted"
+              checked={showCompleted}
+              onChange={(e) => setShowCompleted(e.target.checked)}
+              className="mr-2"
+            />
+            <label htmlFor="showCompleted">Show Completed</label>
+          </div>
+        </div>
         <div className="achievements-grid">
           {achievements.length > 0 ? (
-            achievements.map(ach => (
-              <AchievementCard
-                key={ach.name}
-                achievement={ach}
-                isPinned={ach.isPinned}
-                onPinToggle={handlePinToggle}
-              />
-            ))
+            achievements
+              .filter(ach => showCompleted || !ach.achieved)
+              .map(ach => (
+                <div key={ach.name} onClick={() => handleAchievementClick(ach)}>
+                  <AchievementCard
+                    achievement={ach}
+                    isPinned={ach.isPinned}
+                    onPinToggle={handlePinToggle}
+                  />
+                </div>
+              ))
           ) : (
             <p>No achievements found for this game.</p>
           )}
         </div>
       </main>
+      {isModalOpen && (
+        <AchievementModal
+          achievement={selectedAchievement}
+          onClose={closeModal}
+        />
+      )}
     </div>
   );
 };

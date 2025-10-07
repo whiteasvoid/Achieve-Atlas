@@ -13,36 +13,11 @@ const Debug: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchGamesAndAchievements = async () => {
+    const fetchGames = async () => {
       try {
         setLoading(true);
         const ownedGames = await getOwnedGames();
-
-        const gamesWithAchievements = await Promise.all(
-          ownedGames.map(async (game) => {
-            if (game.playtime_forever > 0) {
-              try {
-                const [playerAchievements, schema] = await Promise.all([
-                  getPlayerAchievements(game.appid),
-                  getSchemaForGame(game.appid),
-                ]);
-
-                return {
-                  ...game,
-                  completedAchievements: playerAchievements.length,
-                  totalAchievements: schema.length,
-                };
-              } catch (e) {
-                console.error(`Failed to fetch achievement data for ${game.name}`, e);
-                // Return game without achievement data if fetching fails
-                return game;
-              }
-            }
-            return game;
-          })
-        );
-        
-        setGames(gamesWithAchievements);
+        setGames(ownedGames);
         setError(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An unknown error occurred.');
@@ -51,7 +26,7 @@ const Debug: React.FC = () => {
       }
     };
 
-    fetchGamesAndAchievements();
+    fetchGames();
   }, []);
 
   return (
@@ -68,9 +43,9 @@ const Debug: React.FC = () => {
               <li key={game.appid}>
                 {game.name}
                 {game.playtime_forever > 0 &&
-                  (typeof game.completedAchievements !== 'undefined' && typeof game.totalAchievements !== 'undefined') && (
+                  (typeof game.unlockedAchievements !== 'undefined' && typeof game.totalAchievements !== 'undefined') && (
                     <span className="ml-2 text-gray-400">
-                      ({game.completedAchievements} / {game.totalAchievements} achievements)
+                      ({game.unlockedAchievements} / {game.totalAchievements} achievements)
                     </span>
                   )}
               </li>

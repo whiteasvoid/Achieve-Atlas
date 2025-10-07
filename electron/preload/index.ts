@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getPlayerAchievements: (appid: number) => ipcRenderer.invoke('get-player-achievements', appid),
   getSchemaForGame: (appid: number) => ipcRenderer.invoke('get-schema-for-game', appid),
   getGameDetails: (appid: number) => ipcRenderer.invoke('get-game-details', appid),
+  getGlobalAchievementPercentages: (appid: number) => ipcRenderer.invoke('get-global-achievement-percentages', appid),
   user: {
     getSteamId: (): Promise<string | null> => ipcRenderer.invoke('get-steam-id'),
     setSteamId: (steamId: string): Promise<void> => ipcRenderer.invoke('set-steam-id', steamId),

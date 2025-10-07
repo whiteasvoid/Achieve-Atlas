@@ -5,7 +5,7 @@ import path from 'node:path'
 import os from 'node:os'
 import dotenv from 'dotenv'
 import { update } from './update'
-import { getOwnedGames, getPlayerAchievements, getSchemaForGame, getGameDetails } from './api/steam'
+import { getOwnedGames, getPlayerAchievements, getSchemaForGame, getGameDetails, getGlobalAchievementPercentages } from './api/steam'
 import { getSteamId, setSteamId, getPinnedAchievements, pinAchievement, unpinAchievement } from './api/user'
 
 const require = createRequire(import.meta.url)
@@ -115,6 +115,7 @@ ipcMain.handle('get-owned-games', getOwnedGames);
 ipcMain.handle('get-player-achievements', (event, appid) => getPlayerAchievements(appid));
 ipcMain.handle('get-schema-for-game', (event, appid) => getSchemaForGame(appid));
 ipcMain.handle('get-game-details', (event, appid) => getGameDetails(appid));
+ipcMain.handle('get-global-achievement-percentages', (event, appid) => getGlobalAchievementPercentages(appid));
 ipcMain.handle('get-steam-id', getSteamId);
 ipcMain.handle('set-steam-id', (event, steamId) => setSteamId(steamId));
 
