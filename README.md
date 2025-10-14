@@ -1,91 +1,80 @@
-# electron-vite-react
+# Achieve_Atlas
 
-[![awesome-vite](https://awesome.re/mentioned-badge.svg)](https://github.com/vitejs/awesome-vite)
-![GitHub stars](https://img.shields.io/github/stars/caoxiemeihao/vite-react-electron?color=fa6470)
-![GitHub issues](https://img.shields.io/github/issues/caoxiemeihao/vite-react-electron?color=d8b22d)
-![GitHub license](https://img.shields.io/github/license/caoxiemeihao/vite-react-electron)
-[![Required Node.JS >= 14.18.0 || >=16.0.0](https://img.shields.io/static/v1?label=node&message=14.18.0%20||%20%3E=16.0.0&logo=node.js&color=3f893e)](https://nodejs.org/about/releases)
+Achieve_Atlas is a Steam achievement tracker application built with Electron, Vite, and React. It allows users to view their owned games and track their achievement progress. The primary purpose of this project was to learn and experiment with the Steam Web API.
 
-English | [简体中文](README.zh-CN.md)
+## Technologies Used
 
-## 👀 Overview
+- **Electron**: A framework for creating native applications with web technologies like JavaScript, HTML, and CSS.
+- **Vite**: A fast build tool that provides a quicker and leaner development experience for modern web projects.
+- **React**: A JavaScript library for building user interfaces.
+- **TypeScript**: A typed superset of JavaScript that compiles to plain JavaScript.
+- **Tailwind CSS**: A utility-first CSS framework for rapid UI development.
+- **Axios**: A promise-based HTTP client for the browser and Node.js.
+- **React Router**: A declarative routing library for React.
 
-📦 Ready out of the box  
-🎯 Based on the official [template-react-ts](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts), project structure will be familiar to you  
-🌱 Easily extendable and customizable  
-💪 Supports Node.js API in the renderer process  
-🔩 Supports C/C++ native addons  
-🐞 Debugger configuration included  
-🖥 Easy to implement multiple windows  
+## Features
 
-## 🛫 Quick Setup
+- Fetches and displays a user's owned games from the Steam API.
+- Caches the list of owned games for 24 hours to improve performance.
+- Fetches and displays achievement data for each game.
+- Allows users to pin achievements to a dashboard for easy tracking.
+- Secure communication between the main and renderer processes using `contextIsolation`.
 
-```sh
-# clone the project
-git clone https://github.com/electron-vite/electron-vite-react.git
+## Project Structure
 
-# enter the project directory
-cd electron-vite-react
+The project is organized into the following main directories:
 
-# install dependency
-npm install
+- **`electron/`**: Contains the Electron main process and preload scripts.
+  - **`main/`**: The main process of the Electron application.
+    - **`index.ts`**: The entry point of the main process.
+    - **`api/`**: Handles Steam API requests and user data management.
+  - **`preload/`**: The preload script for the `BrowserWindow`.
+- **`src/`**: Contains the React renderer process code.
+  - **`renderer/`**: The main renderer process.
+    - **`pages/`**: The different pages of the application.
+    - **`components/`**: The reusable components.
+    - **`api/`**: Handles communication with the main process.
+- **`public/`**: Contains the static assets of the application.
 
-# develop
+## How to Use
+
+### Prerequisites
+
+- Node.js and npm installed on your system.
+- A Steam API key and your Steam ID.
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-username/Achieve_Atlas.git
+   ```
+2. Navigate to the project directory:
+   ```bash
+   cd Achieve_Atlas
+   ```
+3. Install the dependencies:
+   ```bash
+   npm install
+   ```
+4. Create a `.env` file in the root of the project and add your Steam API key and Steam ID:
+   ```
+   STEAM_KEY=your_steam_api_key
+   STEAM_ID=your_steam_id
+   ```
+
+### Running the Application
+
+To run the application in development mode, use the following command:
+
+```bash
 npm run dev
 ```
 
-## 🐞 Debug
+To build the application for production, use the following command:
 
-![electron-vite-react-debug.gif](/electron-vite-react-debug.gif)
-
-## 📂 Directory structure
-
-Familiar React application structure, just with `electron` folder on the top :wink:  
-*Files in this folder will be separated from your React application and built into `dist-electron`*  
-
-```tree
-├── electron                                 Electron-related code
-│   ├── main                                 Main-process source code
-│   └── preload                              Preload-scripts source code
-│
-├── release                                  Generated after production build, contains executables
-│   └── {version}
-│       ├── {os}-{os_arch}                   Contains unpacked application executable
-│       └── {app_name}_{version}.{ext}       Installer for the application
-│
-├── public                                   Static assets
-└── src                                      Renderer source code, your React application
+```bash
+npm run build
 ```
 
-<!--
-## 🚨 Be aware
-
-This template integrates Node.js API to the renderer process by default. If you want to follow **Electron Security Concerns** you might want to disable this feature. You will have to expose needed API by yourself.  
-
-To get started, remove the option as shown below. This will [modify the Vite configuration and disable this feature](https://github.com/electron-vite/vite-plugin-electron-renderer#config-presets-opinionated).
-
-```diff
-# vite.config.ts
-
-export default {
-  plugins: [
-    ...
--   // Use Node.js API in the Renderer-process
--   renderer({
--     nodeIntegration: true,
--   }),
-    ...
-  ],
-}
-```
--->
-
-## 🔧 Additional features
-
-1. electron-updater 👉 [see docs](src/components/update/README.md)
-1. playwright
-
-## ❔ FAQ
-
-- [C/C++ addons, Node.js modules - Pre-Bundling](https://github.com/electron-vite/vite-plugin-electron-renderer#dependency-pre-bundling)
-- [dependencies vs devDependencies](https://github.com/electron-vite/vite-plugin-electron-renderer#dependencies-vs-devdependencies)
+This will create a distributable file in the `dist` directory.
